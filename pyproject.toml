@@ -29,7 +29,7 @@ anyio = "^3.6.1"
 pytest = "^7.1.0"
 pytest-asyncio = "^0.19.0"
 pytest-cov = "^4.0"
-black = "^22.1.0"
+black = "^22.8.0"
 mypy = "^0.982"
 flake8 = "^5.0.4"
 aioboto3 = { optional = true, version = "^10" }

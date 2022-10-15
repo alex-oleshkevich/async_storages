@@ -1,4 +1,5 @@
 import abc
+import anyio.to_thread
 import inspect
 import io
 import mimetypes
@@ -6,8 +7,6 @@ import os
 import pathlib
 import tempfile
 import typing
-
-import anyio.to_thread
 
 
 class AsyncReader(typing.Protocol):
@@ -128,10 +127,12 @@ class S3Storage(BaseStorage):
         region_name: str | None = None,
         profile_name: str | None = None,
         endpoint_url: str | None = None,
+        signed_link_ttl: int = 300,
     ) -> None:
         import aioboto3
 
         self.bucket = bucket
+        self.signed_link_ttl = signed_link_ttl
         self.endpoint_url = endpoint_url.rstrip("/") if endpoint_url else None
         self.region_name = region_name or "us-east-2"
         self.session = aioboto3.Session(
@@ -195,7 +196,7 @@ class S3Storage(BaseStorage):
             url = await client.generate_presigned_url(
                 ClientMethod="get_object",
                 Params={"Bucket": self.bucket, "Key": path},
-                ExpiresIn=3600,
+                ExpiresIn=self.signed_link_ttl,
             )
             return typing.cast(str, url)
 
