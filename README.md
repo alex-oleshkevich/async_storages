@@ -21,7 +21,9 @@ poetry add async_storages
 
 ## Features
 
--   TODO
+- simple abstraction over local filesystem, s3, or memory driver
+- S3 integration
+- Spooled In-memory driver for unit tests
 
 ## Quick start
 
