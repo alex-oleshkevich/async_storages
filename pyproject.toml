@@ -24,18 +24,22 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.10.0"
 anyio = "^3.6.1"
-moto = "^4.0.7"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.0"
-pytest-asyncio = "^0.18.0"
-pytest-cov = "^3.0"
+pytest-asyncio = "^0.19.0"
+pytest-cov = "^4.0"
 black = "^22.1.0"
-mypy = "^0.941"
-flake8 = "^4.0.1"
+mypy = "^0.982"
+flake8 = "^5.0.4"
+aioboto3 = { optional = true, version = "^10" }
 
 [tool.poetry.group.dev.dependencies]
 aioboto3 = "^10.1.0"
+
+[tool.poetry.extras]
+s3 = ["aioboto3"]
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -79,7 +83,7 @@ use_parentheses = true
 [tool.coverage.run]
 branch = true
 source = ["async_storages"]
-omit = ["tests/*", ".venv/*", ".git/*",  "*/__main__.py"]
+omit = ["tests/*", ".venv/*", ".git/*", "*/__main__.py"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -98,7 +102,7 @@ show_column_numbers = true
 show_error_codes = true
 
 [tool.pytest.ini_options]
-minversion =  "7.1"
+minversion = "7.1"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
 norecursedirs = [
     "node_modules", "frontend", "storage", "dist", ".git",
