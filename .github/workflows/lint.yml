@@ -44,8 +44,6 @@ jobs:
             -   name: Run minio
                 run: |
                     docker run -d \
-                        -p 9000:9000 \
-                        -p 9001:9001 \
                         -e MINIO_ROOT_USER=minioadmin \
                         -e MINIO_ROOT_PASSWORD=minioadmin \
                         --name minio \
@@ -60,6 +58,7 @@ jobs:
 
             -   name: Create bucket
                 run: |
+                    sleep 2
                     ./mc alias set minio http://localhost:9000 minioadmin minioadmin
                     ./mc mb minio/asyncstorages
 
