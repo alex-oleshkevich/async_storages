@@ -9,12 +9,12 @@ import tempfile
 import typing
 
 
-class AsyncReader(typing.Protocol):
+class AsyncReader(typing.Protocol):  # pragma: nocover
     async def read(self, n: int = -1) -> bytes:
         ...
 
 
-class AsyncFileLike(typing.Protocol):
+class AsyncFileLike(typing.Protocol):  # pragma: nocover
     async def read(self, n: int = -1) -> bytes:
         ...
 
@@ -33,23 +33,23 @@ class AdaptedBytesIO:
 
 class BaseStorage(abc.ABC):
     @abc.abstractmethod
-    async def write(self, path: str, data: AsyncReader) -> None:
+    async def write(self, path: str, data: AsyncReader) -> None:  # pragma: nocover
         ...
 
     @abc.abstractmethod
-    async def read(self, path: str, chunk_size: int) -> AsyncFileLike:
+    async def read(self, path: str, chunk_size: int) -> AsyncFileLike:  # pragma: nocover
         ...
 
     @abc.abstractmethod
-    async def delete(self, path: str) -> None:
+    async def delete(self, path: str) -> None:  # pragma: nocover
         ...
 
     @abc.abstractmethod
-    async def exists(self, path: str) -> bool:
+    async def exists(self, path: str) -> bool:  # pragma: nocover
         ...
 
     @abc.abstractmethod
-    async def url(self, path: str) -> str:
+    async def url(self, path: str) -> str:  # pragma: nocover
         ...
 
 
