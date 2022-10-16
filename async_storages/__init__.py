@@ -1,3 +1,3 @@
-from .storages import BaseStorage, LocalStorage, MemoryStorage, S3Storage, Store
+from .storages import BaseStorage, FileStorage, LocalStorage, MemoryStorage, S3Storage
 
-__all__ = ["Store", "S3Storage", "MemoryStorage", "LocalStorage", "BaseStorage"]
+__all__ = ["FileStorage", "S3Storage", "MemoryStorage", "LocalStorage", "BaseStorage"]

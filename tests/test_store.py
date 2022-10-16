@@ -1,17 +1,16 @@
 import io
 import os
 import pathlib
-
 import pytest
 
-from async_storages.storages import is_rolled, LocalStorage, MemoryStorage, S3Storage, Store
+from async_storages.storages import FileStorage, LocalStorage, MemoryStorage, S3Storage, is_rolled
 
 AWS_ACCESS_KEY_ID = "minioadmin"
 AWS_SECRET_ACCESS_KEY = "minioadmin"
 AWS_ENDPOINT_URL = os.environ.get("AWS_ENDPOINT_URL", "http://localhost:9000")
 
 stores = [
-    Store(
+    FileStorage(
         S3Storage(
             bucket="asyncstorages",
             aws_access_key_id=AWS_ACCESS_KEY_ID,
@@ -19,15 +18,15 @@ stores = [
             endpoint_url=AWS_ENDPOINT_URL,
         )
     ),
-    Store(LocalStorage(base_dir="/tmp/async_storages", mkdirs=True)),
-    Store(MemoryStorage()),
+    FileStorage(LocalStorage(base_dir="/tmp/async_storages", mkdirs=True)),
+    FileStorage(MemoryStorage()),
 ]
 
 pytestmark = [pytest.mark.asyncio]
 
 
 @pytest.mark.parametrize("store", stores)
-async def test_operations(store: Store) -> None:
+async def test_operations(store: FileStorage) -> None:
     path = "asyncstorages/test.txt"
     content = b"content"
     await store.write(path, content)
@@ -42,7 +41,7 @@ async def test_operations(store: Store) -> None:
 
 
 @pytest.mark.parametrize("store", stores)
-async def test_writes_bytes_io(store: Store) -> None:
+async def test_writes_bytes_io(store: FileStorage) -> None:
     path = "asyncstorages/test.txt"
     content = io.BytesIO(b"content")
     await store.write(path, content)
@@ -52,7 +51,7 @@ async def test_writes_bytes_io(store: Store) -> None:
 
 
 @pytest.mark.parametrize("store", stores)
-async def test_writes_open_file(store: Store, tmp_path: pathlib.Path) -> None:
+async def test_writes_open_file(store: FileStorage, tmp_path: pathlib.Path) -> None:
     file_path = tmp_path / "test.txt"
     with open(file_path, "wb") as f:
         f.write(b"content")
@@ -65,7 +64,7 @@ async def test_writes_open_file(store: Store, tmp_path: pathlib.Path) -> None:
 
 
 @pytest.mark.parametrize("store", stores)
-async def test_generates_url(store: Store) -> None:
+async def test_generates_url(store: FileStorage) -> None:
     path = "asyncstorages/test.txt"
     await store.write(path, b"content")
     url = await store.url(path)
@@ -77,7 +76,7 @@ async def test_generates_url(store: Store) -> None:
 
 async def test_memory_store_with_large_file() -> None:
     storage = MemoryStorage(spool_max_size=2)
-    store = Store(storage)
+    store = FileStorage(storage)
     path = "asyncstorages/test.txt"
     await store.write(path, b"aa")
     assert not is_rolled(storage.fs[path])

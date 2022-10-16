@@ -201,7 +201,7 @@ class S3Storage(BaseStorage):
             return typing.cast(str, url)
 
 
-class Store:
+class FileStorage:
     def __init__(self, storage: BaseStorage) -> None:
         self.storage = storage
 

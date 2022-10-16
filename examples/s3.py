@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from async_storages.storages import S3Storage, Store
+from async_storages.storages import FileStorage, S3Storage
 
 BUCKET = os.environ.get("BUCKET", "asyncstorages")
 ACCESS_KEY_ID = os.environ.get("ACCESS_KEY_ID", "minioadmin")
@@ -14,7 +14,7 @@ TEST_FILE_CONTENT = b"CONTENT"
 
 
 async def main() -> None:
-    store = Store(
+    store = FileStorage(
         S3Storage(
             bucket=BUCKET,
             aws_access_key_id=ACCESS_KEY_ID,
@@ -28,7 +28,7 @@ async def main() -> None:
     print(f"Writing bytes to {TEST_FILE_NAME}")
     await store.write(TEST_FILE_NAME, TEST_FILE_CONTENT)
 
-    print(f"Test if file exists in the remote bucket")
+    print("Test if file exists in the remote bucket")
     assert await store.exists(TEST_FILE_NAME)
     print("It is. Read file contents.")
     print("Delete file")
