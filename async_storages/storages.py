@@ -52,6 +52,10 @@ class BaseStorage(abc.ABC):
     async def url(self, path: str) -> str:  # pragma: nocover
         ...
 
+    @abc.abstractmethod
+    def abspath(self, path: str) -> str:
+        ...
+
 
 def is_rolled(file: tempfile.SpooledTemporaryFile[bytes]) -> bool:
     return getattr(file, "_rolled", True)
@@ -87,6 +91,9 @@ class MemoryStorage(BaseStorage):
     async def url(self, path: str) -> str:
         return "/" + path  # not possible to generate URL for memory-based files
 
+    def abspath(self, path: str) -> str:
+        return path
+
 
 class LocalStorage(BaseStorage):
     def __init__(self, base_dir: str | os.PathLike[typing.AnyStr], mkdirs: bool = False, base_url: str = "/") -> None:
@@ -116,6 +123,9 @@ class LocalStorage(BaseStorage):
 
     async def url(self, path: str) -> str:
         return os.path.join(self.base_url, path)
+
+    def abspath(self, path: str) -> str:
+        return str(self.base_dir / path)
 
 
 class S3Storage(BaseStorage):
@@ -200,6 +210,9 @@ class S3Storage(BaseStorage):
             )
             return typing.cast(str, url)
 
+    def abspath(self, path: str) -> str:
+        return path
+
 
 class FileStorage:
     def __init__(self, storage: BaseStorage) -> None:
@@ -225,3 +238,6 @@ class FileStorage:
 
     async def url(self, path: str | os.PathLike[typing.AnyStr]) -> str:
         return await self.storage.url(str(path))
+
+    def abspath(self, path: str) -> str:
+        return self.storage.abspath(path)
