@@ -24,17 +24,15 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.10.0"
 anyio = "^3.6.1"
-
-[tool.poetry.dev-dependencies]
-pytest = "^7.1.0"
-pytest-asyncio = "^0.19.0"
-pytest-cov = "^4.0"
-black = "^22.8.0"
-mypy = "^0.982"
-flake8 = "^5.0.4"
 aioboto3 = { optional = true, version = "^10" }
 
 [tool.poetry.group.dev.dependencies]
+pytest = "^7.2.0"
+pytest-asyncio = "^0.19.0"
+pytest-cov = "^4.0"
+black = "^22.10.0"
+mypy = "^0.990"
+flake8 = "^5.0.4"
 aioboto3 = "^10.1.0"
 
 [tool.poetry.extras]
@@ -102,7 +100,7 @@ show_column_numbers = true
 show_error_codes = true
 
 [tool.pytest.ini_options]
-minversion = "7.1"
+minversion = "7.2"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
 norecursedirs = [
     "node_modules", "frontend", "storage", "dist", ".git",
