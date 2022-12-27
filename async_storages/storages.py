@@ -18,6 +18,9 @@ class AsyncFileLike(typing.Protocol):  # pragma: nocover
     async def read(self, n: int = -1) -> bytes:
         ...
 
+    async def __aiter__(self) -> typing.AsyncIterator[bytes]:
+        yield b""
+
 
 class AdaptedBytesIO:
     def __init__(self, base: typing.BinaryIO | tempfile.SpooledTemporaryFile[bytes]) -> None:
@@ -30,26 +33,35 @@ class AdaptedBytesIO:
             return self.io.read(n)
         return await anyio.to_thread.run_sync(self.io.read, n)
 
+    async def __aiter__(self) -> typing.AsyncIterator[bytes]:
+        if isinstance(self.io, tempfile.SpooledTemporaryFile) and not is_rolled(self.io):
+            for line in self.io.readlines():
+                yield line
+                return
 
-class BaseStorage(abc.ABC):
+        for line in await anyio.to_thread.run_sync(self.io.readlines):  # will it block for large files?
+            yield line
+
+
+class BaseStorage(abc.ABC):  # pragma: nocover
     @abc.abstractmethod
-    async def write(self, path: str, data: AsyncReader) -> None:  # pragma: nocover
+    async def write(self, path: str, data: AsyncReader) -> None:
         ...
 
     @abc.abstractmethod
-    async def read(self, path: str, chunk_size: int) -> AsyncFileLike:  # pragma: nocover
+    async def read(self, path: str, chunk_size: int) -> AsyncFileLike:
         ...
 
     @abc.abstractmethod
-    async def delete(self, path: str) -> None:  # pragma: nocover
+    async def delete(self, path: str) -> None:
         ...
 
     @abc.abstractmethod
-    async def exists(self, path: str) -> bool:  # pragma: nocover
+    async def exists(self, path: str) -> bool:
         ...
 
     @abc.abstractmethod
-    async def url(self, path: str) -> str:  # pragma: nocover
+    async def url(self, path: str) -> str:
         ...
 
     @abc.abstractmethod
@@ -77,9 +89,9 @@ class MemoryStorage(BaseStorage):
     async def read(self, path: str, chunk_size: int) -> AsyncFileLike:
         if path not in self.fs:
             raise FileNotFoundError(f"No such file in memory store: {path}")
-        file = self.fs[path]
-        await anyio.to_thread.run_sync(file.seek, 0)
-        return AdaptedBytesIO(file)
+        stored_file = self.fs[path]
+        await anyio.to_thread.run_sync(stored_file.seek, 0)
+        return AdaptedBytesIO(stored_file)
 
     async def delete(self, path: str) -> None:
         if path in self.fs:
@@ -173,20 +185,15 @@ class S3Storage(BaseStorage):
             except ClientError as ex:
                 if ex.response["Error"]["Code"] == "NoSuchKey":
                     raise FileNotFoundError("File not found: %s" % path)
-                raise
+                raise  # pragma: nocover
             else:
                 return typing.cast(AsyncFileLike, s3_object["Body"])
 
     async def delete(self, path: str) -> None:
-        from botocore.exceptions import ClientError
+        pass
 
         async with self.session.client("s3", endpoint_url=self.endpoint_url) as client:
-            try:
-                await client.delete_object(Bucket=self.bucket, Key=path)
-            except ClientError as ex:
-                if ex.response["Error"]["Code"] == "NoSuchKey":
-                    raise FileNotFoundError()
-                raise
+            await client.delete_object(Bucket=self.bucket, Key=path)
 
     async def exists(self, path: str) -> bool:
         from botocore.exceptions import ClientError
@@ -197,7 +204,7 @@ class S3Storage(BaseStorage):
             except ClientError as ex:
                 if ex.response["Error"]["Code"] == "NoSuchKey":
                     return False
-                raise
+                raise  # pragma: nocover
             else:
                 return True
 
@@ -241,3 +248,6 @@ class FileStorage:
 
     def abspath(self, path: str) -> str:
         return self.storage.abspath(path)
+
+    async def iterator(self, path: str, chunk_size: int = 1024 * 64) -> typing.AsyncIterable[bytes]:
+        return await self.storage.read(path, chunk_size)

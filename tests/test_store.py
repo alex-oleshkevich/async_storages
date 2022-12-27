@@ -20,6 +20,7 @@ stores = [
     ),
     FileStorage(LocalStorage(base_dir="/tmp/async_storages", mkdirs=True)),
     FileStorage(MemoryStorage()),
+    FileStorage(MemoryStorage(spool_max_size=1)),
 ]
 
 pytestmark = [pytest.mark.asyncio]
@@ -38,6 +39,8 @@ async def test_operations(store: FileStorage) -> None:
     assert chunk == b"tent"
     await store.delete(path)
     assert not await store.exists(path)
+
+    assert "asyncstorages/test.txt" in store.abspath(path)
 
 
 @pytest.mark.parametrize("store", stores)
@@ -78,7 +81,19 @@ async def test_memory_store_with_large_file() -> None:
     storage = MemoryStorage(spool_max_size=2)
     store = FileStorage(storage)
     path = "asyncstorages/test.txt"
-    await store.write(path, b"aa")
-    assert not is_rolled(storage.fs[path])
-    await store.write(path, b"aaa")
+    await store.write(path, b"a" * 1024 * 20)
     assert is_rolled(storage.fs[path])
+
+
+@pytest.mark.parametrize("store", stores)
+async def test_store_iterator(store: FileStorage) -> None:
+    path = "asyncstorages/test.txt"
+    content = b"content"
+    await store.write(path, content)
+
+    iterator = await store.iterator(path)
+    read_content = b""
+    async for chunk in iterator:
+        read_content += chunk
+
+    assert read_content == b"content"

@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "async_storages"
 description = "Async file storages for Python"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Alex Oleshkevich <alex.oleshkevich@gmail.com>"]
 license = "MIT"
 readme = "README.md"
@@ -23,7 +23,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.10.0"
-anyio = "^3.6.1"
+anyio = "^3.6"
 aioboto3 = { optional = true, version = "^10" }
 
 [tool.poetry.group.dev.dependencies]
@@ -34,6 +34,8 @@ black = "^22.10.0"
 mypy = "^0.990"
 flake8 = "^5.0.4"
 aioboto3 = "^10.1.0"
+starlette = "^0.23.1"
+httpx = "^0.23.1"
 
 [tool.poetry.extras]
 s3 = ["aioboto3"]
