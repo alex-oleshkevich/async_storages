@@ -37,10 +37,9 @@ class AdaptedBytesIO:
         if isinstance(self.io, tempfile.SpooledTemporaryFile) and not is_rolled(self.io):
             for line in self.io.readlines():
                 yield line
-                return
-
-        for line in await anyio.to_thread.run_sync(self.io.readlines):  # will it block for large files?
-            yield line
+        else:
+            for line in await anyio.to_thread.run_sync(self.io.readlines):  # will it block for large files?
+                yield line
 
 
 class BaseStorage(abc.ABC):  # pragma: nocover

@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "async_storages"
-description = "Async file storages for Python"
-version = "0.4.0"
+description = "Simple filesytem abstraction for async Python"
+version = "0.4.1"
 authors = ["Alex Oleshkevich <alex.oleshkevich@gmail.com>"]
 license = "MIT"
 readme = "README.md"
