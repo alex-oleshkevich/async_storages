@@ -34,7 +34,7 @@ black = "^22.10.0"
 mypy = "^0.990"
 flake8 = "^5.0.4"
 aioboto3 = "^10.1.0"
-starlette = "^0.23.1"
+starlette = ">=0.23.1,<0.26.0"
 httpx = "^0.23.1"
 
 [tool.poetry.extras]
