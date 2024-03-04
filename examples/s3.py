@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from async_storages.storages import FileStorage, S3Storage
+from async_storages import FileStorage, S3Backend
 
 BUCKET = os.environ.get("BUCKET", "asyncstorages")
 ACCESS_KEY_ID = os.environ.get("ACCESS_KEY_ID", "minioadmin")
@@ -15,7 +15,7 @@ TEST_FILE_CONTENT = b"CONTENT"
 
 async def main() -> None:
     store = FileStorage(
-        S3Storage(
+        S3Backend(
             bucket=BUCKET,
             aws_access_key_id=ACCESS_KEY_ID,
             aws_secret_access_key=ACCESS_KEY_SECRET,

@@ -1,8 +1,9 @@
 import io
-import pytest
 import tempfile
 
-from async_storages.storages import AdaptedBytesIO
+import pytest
+
+from async_storages.backends.base import AdaptedBytesIO
 
 pytestmark = [pytest.mark.asyncio]
 

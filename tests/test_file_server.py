@@ -1,19 +1,21 @@
 import io
 import pathlib
+
 import pytest
 from starlette.applications import Starlette
 from starlette.routing import Mount
 from starlette.testclient import TestClient
 
-from async_storages import BaseStorage, FileStorage, MemoryStorage
-from async_storages.file_server import FileServer
-from async_storages.storages import AdaptedBytesIO, AsyncFileLike, AsyncReader, LocalStorage
+from async_storages import BaseBackend, FileStorage, MemoryBackend
+from async_storages.backends.base import AdaptedBytesIO, AsyncFileLike, AsyncReader
+from async_storages.backends.fs import FileSystemBackend
+from async_storages.contrib.starlette import FileServer
 
 pytestmark = [pytest.mark.asyncio]
 
 
 async def test_file_server_accept_get_or_head_only() -> None:
-    storage = MemoryStorage()
+    storage = MemoryBackend()
     file_server = FileServer(FileStorage(storage))
     app = Starlette(routes=[Mount("/", file_server)])
     await storage.write("test.txt", AdaptedBytesIO(io.BytesIO(b"")))
@@ -24,7 +26,7 @@ async def test_file_server_accept_get_or_head_only() -> None:
     assert client.post("/test.txt").status_code == 405
 
 
-class _RemoteStorage(BaseStorage):  # pragma: nocover
+class _RemoteBackend(BaseBackend):  # pragma: nocover
     async def write(self, path: str, data: AsyncReader) -> None:
         pass
 
@@ -45,18 +47,18 @@ class _RemoteStorage(BaseStorage):  # pragma: nocover
 
 
 def test_file_server_sends_redirect() -> None:
-    storage = _RemoteStorage()
+    storage = _RemoteBackend()
     file_server = FileServer(FileStorage(storage))
     app = Starlette(routes=[Mount("/", file_server)])
 
     client = TestClient(app)
     response = client.get("/test.txt", allow_redirects=False)
-    assert response.status_code == 302
+    assert response.status_code == 301
     assert response.headers["location"] == "http://testmediaserver/test.txt"
 
 
 async def test_file_server_sends_file(tmp_path: pathlib.Path) -> None:
-    storage = LocalStorage(tmp_path, mkdirs=True)
+    storage = FileSystemBackend(tmp_path, mkdirs=True)
     file_server = FileServer(FileStorage(storage))
     app = Starlette(routes=[Mount("/", file_server)])
     await storage.write("test.txt", AdaptedBytesIO(io.BytesIO(b"content")))
@@ -67,8 +69,10 @@ async def test_file_server_sends_file(tmp_path: pathlib.Path) -> None:
     assert response.text == "content"
 
 
-async def test_file_server_returns_404_for_missing_files(tmp_path: pathlib.Path) -> None:
-    storage = LocalStorage(tmp_path, mkdirs=True)
+async def test_file_server_returns_404_for_missing_files(
+    tmp_path: pathlib.Path,
+) -> None:
+    storage = FileSystemBackend(tmp_path, mkdirs=True)
     file_server = FileServer(FileStorage(storage))
     app = Starlette(routes=[Mount("/", file_server)])
 
@@ -78,7 +82,7 @@ async def test_file_server_returns_404_for_missing_files(tmp_path: pathlib.Path)
 
 
 async def test_file_server_streams_from_memory_storage() -> None:
-    storage = MemoryStorage()
+    storage = MemoryBackend()
     file_server = FileServer(FileStorage(storage))
     app = Starlette(routes=[Mount("/", file_server)])
     await storage.write("test.txt", AdaptedBytesIO(io.BytesIO(b"content")))
@@ -88,7 +92,7 @@ async def test_file_server_streams_from_memory_storage() -> None:
 
 
 async def test_file_server_sends_content_disposition_attachment() -> None:
-    storage = MemoryStorage()
+    storage = MemoryBackend()
     file_server = FileServer(FileStorage(storage), as_attachment=True)
     app = Starlette(routes=[Mount("/", file_server)])
     await storage.write("test.txt", AdaptedBytesIO(io.BytesIO(b"content")))
@@ -98,7 +102,7 @@ async def test_file_server_sends_content_disposition_attachment() -> None:
 
 
 async def test_file_server_sends_content_disposition_inline() -> None:
-    storage = MemoryStorage()
+    storage = MemoryBackend()
     file_server = FileServer(FileStorage(storage), as_attachment=False)
     app = Starlette(routes=[Mount("/", file_server)])
     await storage.write("test.txt", AdaptedBytesIO(io.BytesIO(b"content")))

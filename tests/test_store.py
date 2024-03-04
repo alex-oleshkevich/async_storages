@@ -1,26 +1,27 @@
 import io
-import os
 import pathlib
+
 import pytest
 
-from async_storages.storages import FileStorage, LocalStorage, MemoryStorage, S3Storage, is_rolled
-
-AWS_ACCESS_KEY_ID = "minioadmin"
-AWS_SECRET_ACCESS_KEY = "minioadmin"
-AWS_ENDPOINT_URL = os.environ.get("AWS_ENDPOINT_URL", "http://localhost:9000")
+from async_storages.backends.base import is_rolled
+from async_storages.backends.fs import FileSystemBackend
+from async_storages.backends.memory import MemoryBackend
+from async_storages.backends.s3 import S3Backend
+from async_storages.file_storage import FileStorage
+from tests.conftest import AWS_ACCESS_KEY_ID, AWS_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY
 
 stores = [
     FileStorage(
-        S3Storage(
+        S3Backend(
             bucket="asyncstorages",
             aws_access_key_id=AWS_ACCESS_KEY_ID,
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
             endpoint_url=AWS_ENDPOINT_URL,
         )
     ),
-    FileStorage(LocalStorage(base_dir="/tmp/async_storages", mkdirs=True)),
-    FileStorage(MemoryStorage()),
-    FileStorage(MemoryStorage(spool_max_size=1)),
+    FileStorage(FileSystemBackend(base_dir="/tmp/async_storages", mkdirs=True)),
+    FileStorage(MemoryBackend()),
+    FileStorage(MemoryBackend(spool_max_size=1)),
 ]
 
 pytestmark = [pytest.mark.asyncio]
@@ -78,7 +79,7 @@ async def test_generates_url(store: FileStorage) -> None:
 
 
 async def test_memory_store_with_large_file() -> None:
-    storage = MemoryStorage(spool_max_size=2)
+    storage = MemoryBackend(spool_max_size=2)
     store = FileStorage(storage)
     path = "asyncstorages/test.txt"
     await store.write(path, b"a" * 1024 * 20)

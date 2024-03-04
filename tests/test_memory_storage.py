@@ -1,19 +1,20 @@
 import io
 import pathlib
+
 import pytest
 
-from async_storages import MemoryStorage
-from async_storages.storages import AdaptedBytesIO
+from async_storages.backends.base import AdaptedBytesIO
+from async_storages.backends.memory import MemoryBackend
 
 pytestmark = [pytest.mark.asyncio]
 
 
 @pytest.fixture()
-def storage() -> MemoryStorage:
-    return MemoryStorage()
+def storage() -> MemoryBackend:
+    return MemoryBackend()
 
 
-async def test_operations(storage: MemoryStorage) -> None:
+async def test_operations(storage: MemoryBackend) -> None:
     path = "asyncstorages/test.txt"
     await storage.write(path, AdaptedBytesIO(io.BytesIO(b"content")))
     assert await storage.exists(path)
@@ -26,7 +27,9 @@ async def test_operations(storage: MemoryStorage) -> None:
     assert not await storage.exists(path)
 
 
-async def test_memory_storage_raises_exception_for_missing_file(tmp_path: pathlib.Path) -> None:
+async def test_memory_storage_raises_exception_for_missing_file(
+    tmp_path: pathlib.Path,
+) -> None:
     with pytest.raises(FileNotFoundError):
-        storage = MemoryStorage()
+        storage = MemoryBackend()
         await storage.read("test.txt", 1)

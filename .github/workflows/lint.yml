@@ -7,60 +7,56 @@ on:
     push:
         branches: [ master ]
     pull_request:
-        branches: [ master ]
 
 jobs:
-    build:
+    pre_commit:
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
             matrix:
-                python-version: [ '3.10' ]
+                python-version: [ '3.10', '3.11', '3.12' ]
 
         steps:
-            -   uses: actions/checkout@v2
+            -   uses: actions/checkout@v4
+
+            -   name: Set up Python ${{ matrix.python-version }}
+                uses: actions/setup-python@v5
+                with:
+                    python-version: ${{ matrix.python-version }}
+
+            -   name: Run pre-commit
+                uses: pre-commit/action@v3.0.1
+
+    unit_tests:
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                python-version: [ '3.10', '3.11', '3.12' ]
+
+        services:
+            minio:
+                image: bitnami/minio:latest
+                env:
+                    MINIO_ROOT_USER: minioadmin
+                    MINIO_ROOT_PASSWORD: minioadmin
+                ports: [ '9000:9000' ]
+
+        steps:
+            -   uses: actions/checkout@v4
 
             -   name: Cache poetry
-                uses: actions/cache@v2
+                uses: actions/cache@v3
                 with:
                     path: |
                         ~/.cache/pypoetry
                         ~/.cache/pip
                     key: ${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
 
-            -   name: Cache minio client
-                id: cache-mcli
-                uses: actions/cache@v2
-                with:
-                    path: /home/runner/work/async_storages/async_storages/mc
-                    key: ${{ runner.os }}
-
-
             -   name: Set up Python ${{ matrix.python-version }}
-                uses: actions/setup-python@v2
+                uses: actions/setup-python@v5
                 with:
                     python-version: ${{ matrix.python-version }}
-
-            -   name: Run minio
-                run: |
-                    docker run -d \
-                        -e MINIO_ROOT_USER=minioadmin \
-                        -e MINIO_ROOT_PASSWORD=minioadmin \
-                        --name minio \
-                        --network host \
-                        minio/minio:latest server /data
-
-            -   name: Get mcli
-                if: steps.cache-mcli.outputs.cache-hit != 'true'
-                run: |
-                    wget https://dl.min.io/client/mc/release/linux-amd64/mc
-                    chmod +x mc
-
-            -   name: Create bucket
-                run: |
-                    sleep 2
-                    ./mc alias set minio http://localhost:9000 minioadmin minioadmin
-                    ./mc mb minio/asyncstorages
 
             -   name: Install dependencies
                 run: |
@@ -68,18 +64,8 @@ jobs:
                     poetry config virtualenvs.create false
                     poetry install --no-interaction
 
-            -   name: Lint with flake8
-                run: |
-                    flake8 async_storages/ tests/
-
-            -   name: Lint with mypy
-                run: |
-                    mypy --config-file pyproject.toml
-
-            -   name: Lint with black
-                run: |
-                    black --config=pyproject.toml --check async_storages/ tests/
-
             -   name: Test with pytest
+                env:
+                    AWS_ENDPOINT_URL: "http://localhost:9000"
                 run: |
                     pytest --no-cov-on-fail --cov async_storages/ --cov tests/
