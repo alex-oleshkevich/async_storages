@@ -18,12 +18,24 @@ async def test_file_server_accept_get_or_head_only() -> None:
     storage = MemoryBackend()
     file_server = FileServer(FileStorage(storage))
     app = Starlette(routes=[Mount("/", file_server)])
-    await storage.write("test.txt", AdaptedBytesIO(io.BytesIO(b"")))
+    await storage.write("test.txt", AdaptedBytesIO(io.BytesIO(b"content")))
 
     client = TestClient(app)
     assert client.get("/test.txt").status_code == 200
+    assert client.get("/test.txt").text == "content"
     assert client.head("/test.txt").status_code == 200
     assert client.post("/test.txt").status_code == 405
+
+
+async def test_file_server_submounted() -> None:
+    storage = MemoryBackend()
+    file_server = FileServer(FileStorage(storage))
+    app = Starlette(routes=[Mount("/media", routes=[Mount("/storage", app=file_server)])])
+    await storage.write("test.txt", AdaptedBytesIO(io.BytesIO(b"content")))
+
+    client = TestClient(app)
+    assert client.get("/media/storage/test.txt").status_code == 200
+    assert client.get("/media/storage/test.txt").text == "content"
 
 
 class _RemoteBackend(BaseBackend):  # pragma: nocover

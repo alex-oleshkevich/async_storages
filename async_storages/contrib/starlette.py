@@ -73,7 +73,8 @@ class FileServer:
         )
 
     def get_path(self, scope: Scope) -> str:
-        return typing.cast(str, os.path.normpath(os.path.join(*scope["path"].split("/"))))
+        file_path = scope["path"].replace(scope["root_path"], "").strip("/")
+        return typing.cast(str, os.path.normpath(os.path.join(*file_path.split("/"))))
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         assert scope["type"] == "http"
