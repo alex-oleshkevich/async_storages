@@ -13,7 +13,7 @@ class FileSystemBackend(BaseBackend):
         base_dir: str | os.PathLike[typing.AnyStr],
         mkdirs: bool = False,
         base_url: str = "/",
-        mkdir_permissions: int = 755,
+        mkdir_permissions: int = 0o777,
         mkdir_exists_ok: bool = True,
     ) -> None:
         self.base_url = base_url
