@@ -1,4 +1,5 @@
 import io
+import os.path
 import pathlib
 
 import pytest
@@ -23,7 +24,13 @@ async def test_operations(storage: FileSystemBackend) -> None:
     assert await file.read(10) == b"content"
     assert storage.abspath(path) == f"{storage.base_dir}/asyncstorages/test.txt"
     assert await storage.url(path) == "http://example/asyncstorages/test.txt"
-    await storage.delete(path)
+    assert os.path.exists(storage.abspath(path))
+    await storage.delete(str(path))
+    assert not await storage.exists(path)
+    assert not os.path.exists(storage.abspath(path))
+
+    # test case with missing file
+    await storage.delete("/tmp/__missing__")
     assert not await storage.exists(path)
 
 

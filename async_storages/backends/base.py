@@ -1,5 +1,6 @@
 import abc
 import tempfile
+import types
 import typing
 
 import anyio.to_thread
@@ -9,17 +10,21 @@ def is_rolled(file: tempfile.SpooledTemporaryFile[bytes]) -> bool:
     return getattr(file, "_rolled", True)
 
 
-class AsyncReader(typing.Protocol):  # pragma: nocover
-    async def read(self, n: int = -1) -> bytes:
-        ...
+class AsyncReader(typing.Protocol):  # pragma: no cover
+    async def read(self, n: int = -1) -> bytes: ...
 
 
-class AsyncFileLike(typing.Protocol):  # pragma: nocover
-    async def read(self, n: int = -1) -> bytes:
-        ...
+class AsyncFileLike(typing.Protocol):  # pragma: no cover
+    async def read(self, n: int = -1) -> bytes: ...
 
     async def __aiter__(self) -> typing.AsyncIterator[bytes]:
         yield b""
+
+    async def __aenter__(self) -> "AsyncFileLike": ...
+
+    async def __aexit__(
+        self, exc_type: type[Exception], exc_val: BaseException, exc_tb: types.TracebackType
+    ) -> None: ...
 
 
 class AdaptedBytesIO:
@@ -41,28 +46,28 @@ class AdaptedBytesIO:
             for line in await anyio.to_thread.run_sync(self.io.readlines):  # will it block for large files?
                 yield line
 
+    async def __aenter__(self) -> "AdaptedBytesIO":
+        return self
 
-class BaseBackend(abc.ABC):  # pragma: nocover
-    @abc.abstractmethod
-    async def write(self, path: str, data: AsyncReader) -> None:
-        ...
+    async def __aexit__(self, exc_type: type[Exception], exc_val: BaseException, exc_tb: types.TracebackType) -> None:
+        await anyio.to_thread.run_sync(self.io.close)
 
-    @abc.abstractmethod
-    async def read(self, path: str, chunk_size: int) -> AsyncFileLike:
-        ...
 
+class BaseBackend(abc.ABC):  # pragma: no cover
     @abc.abstractmethod
-    async def delete(self, path: str) -> None:
-        ...
+    async def write(self, path: str, data: AsyncReader) -> None: ...
 
     @abc.abstractmethod
-    async def exists(self, path: str) -> bool:
-        ...
+    async def read(self, path: str, chunk_size: int) -> AsyncFileLike: ...
 
     @abc.abstractmethod
-    async def url(self, path: str) -> str:
-        ...
+    async def delete(self, path: str) -> None: ...
 
     @abc.abstractmethod
-    def abspath(self, path: str) -> str:
-        ...
+    async def exists(self, path: str) -> bool: ...
+
+    @abc.abstractmethod
+    async def url(self, path: str) -> str: ...
+
+    @abc.abstractmethod
+    def abspath(self, path: str) -> str: ...

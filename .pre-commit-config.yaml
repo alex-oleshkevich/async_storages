@@ -6,7 +6,7 @@ default_stages: [ commit ]
 
 repos:
     -   repo: https://github.com/pre-commit/pre-commit-hooks
-        rev: v4.5.0
+        rev: v4.6.0
         hooks:
             -   id: trailing-whitespace
             -   id: end-of-file-fixer
@@ -24,7 +24,7 @@ repos:
             -   id: check-executables-have-shebangs
 
     -   repo: https://github.com/pre-commit/mirrors-mypy
-        rev: 'v1.8.0'
+        rev: 'v1.11.2'
         hooks:
             -   id: mypy
                 additional_dependencies:
@@ -39,7 +39,7 @@ repos:
                 args: [ '--in-place', '--wrap-summaries=120', '--wrap-descriptions=120', '--pre-summary-newline' ]
 
     -   repo: https://github.com/astral-sh/ruff-pre-commit
-        rev: v0.1.7
+        rev: v0.6.2
         hooks:
             -   id: ruff
                 args: [ --fix ]

@@ -26,6 +26,9 @@ async def test_operations(storage: MemoryBackend) -> None:
     await storage.delete(path)
     assert not await storage.exists(path)
 
+    await storage.delete("/tmp/__missing_file.txt")
+    assert not await storage.exists(path)
+
 
 async def test_memory_storage_raises_exception_for_missing_file(
     tmp_path: pathlib.Path,

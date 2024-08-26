@@ -33,6 +33,7 @@ class MemoryBackend(BaseBackend):
 
     async def delete(self, path: str) -> None:
         if path in self.fs:
+            self.fs[path].close()
             del self.fs[path]
 
     async def exists(self, path: str) -> bool:

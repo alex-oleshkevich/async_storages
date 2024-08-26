@@ -14,6 +14,7 @@ from starlette.types import Receive, Scope, Send
 
 from async_storages import FileStorage, MemoryBackend
 
+
 # add uploader
 # add file name generator
 
@@ -33,10 +34,18 @@ class FileServer:
         if scope["method"] not in ("GET", "HEAD"):
             return PlainTextResponse("Method Not Allowed", status_code=405)
 
+        if not path or path == ".":
+            return PlainTextResponse("File not found", status_code=404)
+
+        if ".." in path:  # forbid parent directory access
+            return PlainTextResponse("Forbidden", status_code=403)
+
+        path = path.removeprefix("/")  # strip leading slash if any
+
         # in case of s3-like storages - they should return URL to the file
         # we will redirect to that destination
         url = await self.storage.url(path)
-        if url.startswith("http://") or url.startswith("https://"):
+        if url.startswith(("http://", "https://")):
             return RedirectResponse(url, status_code=self.redirect_status)
 
         if not await self.storage.exists(path):
@@ -48,7 +57,7 @@ class FileServer:
             reader = await self.storage.storage.read(path, 1024 * 8)
 
             async def streamer() -> typing.AsyncIterable[bytes]:
-                while chunk := await reader.read(1024 * 8):
+                while chunk := await reader.read(1024 * 64):
                     yield chunk
 
             return StreamingResponse(

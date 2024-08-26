@@ -3,7 +3,7 @@ import pathlib
 
 import pytest
 
-from async_storages.backends.base import is_rolled
+from async_storages.backends.base import AdaptedBytesIO, is_rolled
 from async_storages.backends.fs import FileSystemBackend
 from async_storages.backends.memory import MemoryBackend
 from async_storages.backends.s3 import S3Backend
@@ -45,11 +45,26 @@ async def test_operations(store: FileStorage) -> None:
 
 
 @pytest.mark.parametrize("store", stores)
+async def test_writes_bytes(store: FileStorage) -> None:
+    path = "asyncstorages/test.txt"
+    await store.write(path, b"content")
+    assert await store.exists(path)
+    async with await store.open(path) as file:
+        assert await file.read() == b"content"
+
+    await store.delete(path)
+    assert not await store.exists(path)
+
+
+@pytest.mark.parametrize("store", stores)
 async def test_writes_bytes_io(store: FileStorage) -> None:
     path = "asyncstorages/test.txt"
     content = io.BytesIO(b"content")
     await store.write(path, content)
     assert await store.exists(path)
+    async with await store.open(path) as file:
+        assert await file.read() == b"content"
+
     await store.delete(path)
     assert not await store.exists(path)
 
@@ -63,6 +78,20 @@ async def test_writes_open_file(store: FileStorage, tmp_path: pathlib.Path) -> N
         path = "asyncstorages/test.txt"
         await store.write(path, content)
     assert await store.exists(path)
+    await store.delete(path)
+    assert not await store.exists(path)
+
+
+@pytest.mark.parametrize("store", stores)
+async def test_writes_async_reader(store: FileStorage, tmp_path: pathlib.Path) -> None:
+    reader = AdaptedBytesIO(io.BytesIO(b"content"))
+
+    path = "asyncstorages/test.txt"
+    await store.write(path, reader)
+    assert await store.exists(path)
+    async with await store.open(path) as file:
+        assert await file.read() == b"content"
+
     await store.delete(path)
     assert not await store.exists(path)
 
@@ -83,6 +112,9 @@ async def test_memory_store_with_large_file() -> None:
     store = FileStorage(storage)
     path = "asyncstorages/test.txt"
     await store.write(path, b"a" * 1024 * 20)
+    async with await store.open(path) as file:
+        assert await file.read()
+
     assert is_rolled(storage.fs[path])
 
 

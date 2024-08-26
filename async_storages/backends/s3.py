@@ -17,7 +17,7 @@ class S3Backend(BaseBackend):
     ) -> None:
         try:
             import aioboto3
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError("Install aioboto3 to use s3 backend: pip install async_storages[s3]")
 
         self.bucket = bucket
@@ -52,7 +52,7 @@ class S3Backend(BaseBackend):
             except ClientError as ex:
                 if ex.response["Error"]["Code"] == "NoSuchKey":
                     raise FileNotFoundError("File not found: %s" % path)
-                raise  # pragma: nocover
+                raise  # pragma: no cover
             else:
                 return typing.cast(AsyncFileLike, s3_object["Body"])
 
@@ -71,7 +71,7 @@ class S3Backend(BaseBackend):
             except ClientError as ex:
                 if ex.response["Error"]["Code"] == "NoSuchKey":
                     return False
-                raise  # pragma: nocover
+                raise  # pragma: no cover
             else:
                 return True
 

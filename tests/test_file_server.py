@@ -93,6 +93,32 @@ async def test_file_server_returns_404_for_missing_files(
     assert response.status_code == 404
 
 
+async def test_file_server_returns_404_if_path_missing(
+    tmp_path: pathlib.Path,
+) -> None:
+    storage = FileSystemBackend(tmp_path, mkdirs=True)
+    file_server = FileServer(FileStorage(storage))
+    app = Starlette(routes=[Mount("/media", file_server)])
+
+    client = TestClient(app)
+    response = client.get("/media/")
+    assert response.status_code == 404
+
+
+async def test_file_server_forbids_parent_dir_listing(
+    tmp_path: pathlib.Path,
+) -> None:
+    storage = FileSystemBackend(tmp_path, mkdirs=True)
+    file_server = FileServer(FileStorage(storage))
+    app = Starlette(routes=[Mount("/", file_server)])
+
+    # it may look like an invalid test,
+    # but I want to make sure that we deny any access if path contains ".."
+    client = TestClient(app)
+    response = client.get("/..secret")
+    assert response.status_code == 403
+
+
 async def test_file_server_streams_from_memory_storage() -> None:
     storage = MemoryBackend()
     file_server = FileServer(FileStorage(storage))
