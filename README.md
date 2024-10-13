@@ -3,7 +3,6 @@
 Async file storages for Python
 
 ![PyPI](https://img.shields.io/pypi/v/async_storages)
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/alex-oleshkevich/async_storages/Lint)
 ![GitHub](https://img.shields.io/github/license/alex-oleshkevich/async_storages)
 ![Libraries.io dependency status for latest release](https://img.shields.io/librariesio/release/pypi/async_storages)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/async_storages)
