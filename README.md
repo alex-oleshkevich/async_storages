@@ -14,8 +14,6 @@ Install `async_storages` using PIP or poetry:
 
 ```bash
 pip install async_storages
-# or
-poetry add async_storages
 ```
 
 ## Features
