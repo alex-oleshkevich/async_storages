@@ -7,22 +7,18 @@ import uuid
 import sanitize_filename
 
 
-class UploadFileLike(typing.Protocol):  # pragma: no cover
-    filename: str
-
-
 def _get_now() -> datetime.datetime:
     # this is a mock target for tests
     return datetime.datetime.now()
 
 
 def generate_file_path(
-    file: UploadFileLike,
+    filename: str,
     destination: str,
     extra_tokens: typing.Mapping[str, typing.Any] | None = None,
 ) -> str:
     """
-    Generate file path interpolation tokens in destination.
+    Generate a destination path.
 
     Built-in interpolation tokens:
     - {random} - 8 random hex digits
@@ -46,8 +42,8 @@ def generate_file_path(
         time=now.time().isoformat(),
         timestamp=int(time.time()),
         # file name parts
-        file_name=sanitize_filename.sanitize(file.filename),
-        name=os.path.splitext(file.filename)[0],
-        extension=os.path.splitext(file.filename)[1].removeprefix("."),
+        file_name=sanitize_filename.sanitize(filename),
+        name=os.path.splitext(filename)[0],
+        extension=os.path.splitext(filename)[1].removeprefix("."),
         **(extra_tokens or {}),
     )
